@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>欣容友善雞蛋 - 線上訂購</title>
+  
+  <!-- Tailwind CSS 樣式庫 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js 網頁邏輯 -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <!-- LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Google 字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Noto Sans TC"', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 
+              600: '#16a34a', 700: '#15803d', 800: '#137a38',
+            },
+            egg: {
+              100: '#fef3c7', 500: '#f59e0b', 600: '#d97706', 700: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-stone-100 font-sans text-stone-800 antialiased pb-28 selection:bg-brand-100 selection:text-brand-800" x-data="orderApp()">
+
+  <!-- 1. 訂購填單介面 -->
+  <div x-show="step === 'order'">
+    
+    <!-- 頂部品牌標頭 -->
+    <header class="bg-gradient-to-r from-brand-800 to-brand-700 text-white px-5 pt-6 pb-5 shadow-md rounded-b-3xl">
+      <div class="max-w-md mx-auto">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-inner border-2 border-brand-100 overflow-hidden">
+              <img src="logo.jpg" alt="Logo" class="w-full h-full object-cover" @error="$el.outerHTML='🍳'">
+            </div>
+            <div>
+              <h1 class="text-xl font-extrabold tracking-wide">欣容友善雞蛋</h1>
+              <p class="text-[11px] text-brand-100 font-medium">人道飼養 ‧ 當日採收 ‧ 產地直送</p>
+            </div>
+          </div>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-400 text-stone-900 shadow">
+            直營好蛋
+          </span>
+        </div>
+
+        <!-- 品質保證標籤 -->
+        <div class="mt-3.5 pt-2.5 border-t border-brand-600/60 grid grid-cols-3 gap-1 text-center text-[11px] text-brand-100 font-medium">
+          <div>✓ 100% 友善平飼</div>
+          <div>✓ 無抗生素殘留</div>
+          <div>✓ 新鮮產地直送</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <main class="max-w-md mx-auto px-4 mt-3.5 space-y-3.5">
+
+      <!-- 滿額免運提示 Banner -->
+      <div class="bg-amber-50 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-2xl">🚚</span>
+          <div>
+            <div class="text-xs font-extrabold text-amber-900">滿 4 箱享免運費優惠！</div>
+            <div class="text-[11px] text-amber-700 font-medium">1 ~ 3 箱運費統一為 $100 元</div>
+          </div>
+        </div>
+        <span class="text-xs font-bold text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-xl">4箱免運</span>
+      </div>
+
+      <!-- 老客戶歡迎 Banner -->
+      <div x-show="isReturningCustomer" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-2.5">
+          <span class="text-xl">🌟</span>
+          <div>
+            <div class="text-xs font-bold text-emerald-900">歡迎再次光臨！系統已自動預填您的配送資料</div>
+            <div class="text-[11px] text-emerald-700" x-text="'上次購買：' + lastOrderItems"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 單選規格列表 -->
+      <section class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <h2 class="text-sm font-extrabold text-stone-800 flex items-center gap-1.5">
+            <span class="w-2 h-4 bg-brand-600 rounded-full inline-block"></span>
+            選擇購買箱數（30顆禮盒裝）
+          </h2>
+          <span class="text-xs text-stone-400 font-medium">請選擇一種規格</span>
+        </div>
+
+        <template x-for="product in products" :key="product.id">
+          <div @click="selectedProductId = product.id"
+               :class="selectedProductId === product.id ? 'border-2 border-brand-600 bg-white shadow-md ring-1 ring-brand-600/30' : 'border border-stone-200 bg-white shadow-sm hover:border-stone-300'"
+               class="rounded-2xl p-3.5 transition cursor-pointer relative overflow-hidden">
+            
+            <!-- 熱銷 / 免運 懸浮標籤 -->
+            <span x-show="product.badge" x-text="product.badge" 
+                  :class="product.id === 'p4' ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white' : 'bg-amber-500 text-white'"
+                  class="absolute top-0 right-0 text-[10px] font-bold px-2.5 py-0.5 rounded-bl-xl shadow-sm">
+            </span>
+
+            <div class="flex items-center space-x-3">
+              
+              <!-- 左側 Radio 按鈕 -->
+              <div class="flex-shrink-0">
+                <div :class="selectedProductId === product.id ? 'border-2 border-brand-600 bg-white' : 'border-2 border-stone-300 bg-white'"
+                     class="w-6 h-6 rounded-full flex items-center justify-center transition">
+                  <div x-show="selectedProductId === product.id" class="w-3 h-3 bg-brand-600 rounded-full"></div>
+                </div>
+              </div>
+
+              <!-- 中間商品圖片 -->
+              <div class="w-16 h-16 rounded-xl bg-amber-100 flex-shrink-0 overflow-hidden border border-amber-200/60 flex items-center justify-center">
+                <img :src="product.img || 'egg.jpg'" 
+                     :alt="product.name" 
+                     class="w-full h-full object-cover"
+                     @error="$el.style.display='none'; $el.nextElementSibling.style.display='block'">
+                <span class="text-2xl hidden">🥚</span>
+              </div>
+
+              <!-- 右側文字與價格 -->
+              <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-stone-900 text-sm leading-tight" x-text="product.name"></h3>
+                <p class="text-[11px] text-stone-500 mt-0.5 truncate" x-text="product.desc"></p>
+                <div class="mt-1.5 flex items-baseline space-x-1.5">
+                  <span class="text-base font-black text-egg-700" x-text="'$' + product.price"></span>
+                  <span class="text-[11px] font-medium" 
+                        :class="product.boxes >= 4 ? 'text-red-500 font-bold bg-red-50 px-1.5 py-0.5 rounded-md' : 'text-stone-400'"
+                        x-text="product.boxes >= 4 ? '免運費' : '+ 運費 $100'">
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </template>
+      </section>
+
+      <!-- 寄送資訊與匯款填寫表單 -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/70 space-y-3.5" id="shipping-form">
+        <h2 class="text-sm font-extrabold text-stone-800 flex items-center gap-1.5 border-b border-stone-100 pb-2">
+          <span class="w-2 h-4 bg-amber-500 rounded-full inline-block"></span>
+          訂購人與配送資訊
+        </h2>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-stone-700">收件人姓名 <span class="text-red-500">*</span></label>
+          <input type="text" x-model="form.name" placeholder="請輸入姓名" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-stone-700">聯絡電話 <span class="text-red-500">*</span></label>
+          <input type="tel" x-model="form.phone" placeholder="例如：0912345678" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-stone-700">配送地址 <span class="text-red-500">*</span></label>
+          <input type="text" x-model="form.address" placeholder="請輸入完整收件地址" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+
+        <!-- 🏦 匯款帳號展示區 -->
+        <div class="bg-amber-50 rounded-2xl p-3.5 border border-amber-200/90 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-amber-900 flex items-center gap-1">
+              🏦 農場匯款帳號
+            </span>
+            <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-md">銀行轉帳</span>
+          </div>
+
+          <div class="space-y-1 text-xs text-amber-950 font-medium">
+            <div>銀行 / 郵局：<span class="font-bold">700 郵局 (布袋新塭郵局)</span></div>
+            <div>戶名：<span class="font-bold">邱茂榮</span></div>
+            <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-amber-300/80 mt-1">
+              <span class="font-mono text-sm font-black text-amber-900">00514540025778</span>
+              <button type="button" @click="copyAccount('00514540025778')" 
+                      class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition active:scale-95 shadow-sm">
+                <span x-text="copied ? '已複製！' : '一鍵複製'"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ✍️ 匯款帳號末五碼 -->
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-stone-700">匯款帳號末 5 碼 <span class="text-red-500">*</span></label>
+          <input type="text" x-model="form.bankLast5" maxlength="5" placeholder="例如：85591 (請填寫轉帳帳號末五碼)" 
+                 class="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/30 text-sm font-bold text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500">
+          <p class="text-[11px] text-stone-400">💡 填寫轉帳帳號末五碼，以便為您核對對帳。</p>
+        </div>
+
+        <div class="space-y-1">
+          <label class="block text-xs font-bold text-stone-700">宅配備註 (選填)</label>
+          <input type="text" x-model="form.note" placeholder="例如：管理室代收 / 抵達前先電話聯絡" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 吸底購物車列 -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-200/80 shadow-2xl p-3.5 z-50">
+      <div class="max-w-md mx-auto flex items-center justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex items-baseline gap-1">
+            <span class="text-xs text-stone-500">應付總額:</span>
+            <span class="text-2xl font-black text-egg-700" x-text="'$' + calculateTotal().toLocaleString()"></span>
+          </div>
+          <div class="text-[10px] text-stone-400 font-medium" x-text="calculateBreakdownText()"></div>
+        </div>
+
+        <button type="button" @click="submitOrder()" 
+                class="flex-1 bg-gradient-to-r from-brand-600 to-brand-700 active:from-brand-700 text-white font-extrabold py-3 px-4 rounded-xl shadow-lg shadow-brand-600/30 flex items-center justify-center transition disabled:opacity-50"
+                :disabled="isSubmitting">
+          <span x-show="!isSubmitting">確認送出訂單 🚀</span>
+          <span x-show="isSubmitting">處理中...</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- 2. 下單成功與匯款帳號卡片介面 -->
+  <div x-show="step === 'success'" class="max-w-md mx-auto px-4 pt-8 pb-10 space-y-5">
+    <div class="bg-white rounded-3xl p-6 shadow-xl border border-stone-200/80 text-center space-y-4">
+      
+      <div class="w-16 h-16 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner">
+        🎉
+      </div>
+
+      <div>
+        <h2 class="text-xl font-extrabold text-stone-900">訂單已成功送出！</h2>
+        <p class="text-xs text-stone-500 mt-1">感謝您的訂購，我們將盡快為您安排採收出貨！</p>
+      </div>
+
+      <div class="bg-stone-50 rounded-2xl p-4 text-left space-y-2 text-xs border border-stone-200">
+        <div class="flex justify-between text-stone-600">
+          <span>訂購人：</span>
+          <span class="font-bold text-stone-800" x-text="form.name"></span>
+        </div>
+        <div class="flex justify-between text-stone-600">
+          <span>購買內容：</span>
+          <span class="font-bold text-stone-800 text-right" x-text="getSelectedProduct().name"></span>
+        </div>
+        <div class="flex justify-between text-stone-600">
+          <span>匯款帳號末五碼：</span>
+          <span class="font-bold text-amber-700" x-text="form.bankLast5"></span>
+        </div>
+        <!-- 🌟 新增：第二頁顯示宅配備註 -->
+        <div class="flex justify-between text-stone-600">
+          <span>宅配備註：</span>
+          <span class="font-bold text-stone-800 text-right" x-text="form.note.trim() ? form.note : '無'"></span>
+        </div>
+        <div class="flex justify-between text-stone-600 pt-2 border-t border-stone-200">
+          <span>應付總金額：</span>
+          <span class="font-black text-egg-700 text-sm" x-text="'$' + calculateTotal().toLocaleString()"></span>
+        </div>
+      </div>
+
+      <!-- 🏦 匯款帳號展示區 (第二頁) -->
+      <div class="bg-amber-50 rounded-2xl p-4 text-left border border-amber-200 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
+            🏦 農場匯款帳號資訊
+          </span>
+          <span class="text-[10px] bg-amber-200 text-amber-800 font-bold px-2 py-0.5 rounded-md">對帳資訊</span>
+        </div>
+
+        <div class="space-y-1 text-xs text-amber-950 font-medium">
+          <div>銀行 / 郵局：<span class="font-bold">700 郵局 (布袋新塭郵局)</span></div>
+          <div>戶名：<span class="font-bold">邱茂榮</span></div>
+          <div class="flex items-center justify-between bg-white px-3 py-2 rounded-xl border border-amber-300/80 mt-1">
+            <span class="font-mono text-sm font-black text-amber-900">00514540025778</span>
+            <button type="button" @click="copyAccount('00514540025778')" 
+                    class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg transition active:scale-95 shadow-sm">
+              <span x-text="copied ? '已複製！' : '一鍵複製'"></span>
+            </button>
+          </div>
+        </div>
+        <p class="text-[11px] text-amber-700 pt-1">💡 您可隨時在 LINE 對話框點選「查進度」進行訂單狀態追蹤喔！</p>
+      </div>
+
+      <button type="button" @click="closeLiffWindow()" 
+              class="w-full bg-stone-800 text-white font-bold py-3.5 rounded-xl shadow-md active:scale-95 transition text-sm">
+        完成並返回 LINE 聊天室
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- JavaScript 邏輯 -->
+  <script>
+    function orderApp() {
+      return {
+        GAS_WEB_APP_URL: "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec",
+        LIFF_ID: "YOUR_LIFF_ID",
+
+        step: 'order',
+        isSubmitting: false,
+        copied: false,
+        isReturningCustomer: false,
+        lastOrderItems: '',
+        lineUserId: "",
+        lineUserName: "",
+
+        selectedProductId: 'p2',
+
+        products: [
+          { id: 'p1', name: '30顆禮盒 (一箱)', desc: '30顆新鮮雞蛋 ‧ 適合單身/小家庭', price: 420, boxes: 1, badge: '', img: 'egg.jpg' },
+          { id: 'p2', name: '60顆禮盒 (兩箱)', desc: '60顆新鮮雞蛋 ‧ 一般家庭首選', price: 840, boxes: 2, badge: '熱銷推薦', img: 'egg.jpg' },
+          { id: 'p3', name: '90顆禮盒 (三箱)', desc: '90顆新鮮雞蛋 ‧ 團購合購分享', price: 1260, boxes: 3, badge: '', img: 'egg.jpg' },
+          { id: 'p4', name: '120顆禮盒 (四箱)', desc: '120顆新鮮雞蛋 ‧ 滿四箱享免運優惠！', price: 1680, boxes: 4, badge: '🚀 滿4箱免運', img: 'egg.jpg' }
+        ],
+
+        form: { name: '', phone: '', address: '', bankLast5: '', note: '' },
+
+        init() {
+          if (typeof liff !== 'undefined') {
+            liff.init({ liffId: this.LIFF_ID }).then(() => {
+              if (liff.isLoggedIn()) {
+                liff.getProfile().then(p => {
+                  this.lineUserId = p.userId;
+                  this.lineUserName = p.displayName;
+                  if (!this.form.name) this.form.name = p.displayName;
+
+                  fetch(this.GAS_WEB_APP_URL + "?userId=" + encodeURIComponent(p.userId))
+                    .then(res => res.json())
+                    .then(userHistory => {
+                      if (userHistory.result === 'success') {
+                        if (userHistory.name) this.form.name = userHistory.name;
+                        if (userHistory.phone) this.form.phone = userHistory.phone;
+                        if (userHistory.address) this.form.address = userHistory.address;
+                        
+                        this.isReturningCustomer = true;
+                        this.lastOrderItems = userHistory.lastItems;
+                      }
+                    })
+                    .catch(err => console.log('新客戶或資料獲取失敗'));
+                });
+              }
+            }).catch(err => console.log('非 LINE 環境測試中'));
+          }
+        },
+
+        getSelectedProduct() {
+          return this.products.find(p => p.id === this.selectedProductId) || this.products[0];
+        },
+
+        calculateFreight() {
+          const p = this.getSelectedProduct();
+          return p.boxes >= 4 ? 0 : 100;
+        },
+
+        calculateTotal() {
+          const p = this.getSelectedProduct();
+          return p.price + this.calculateFreight();
+        },
+
+        calculateBreakdownText() {
+          const p = this.getSelectedProduct();
+          const freight = this.calculateFreight();
+          if (freight === 0) {
+            return `含商品 $${p.price.toLocaleString()} (滿 4 箱免運費)`;
+          } else {
+            return `含商品 $${p.price.toLocaleString()} + 運費 $${freight}`;
+          }
+        },
+
+        copyAccount(acc) {
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(acc).then(() => {
+              this.copied = true;
+              setTimeout(() => this.copied = false, 2000);
+            }).catch(() => this.fallbackCopy(acc));
+          } else {
+            this.fallbackCopy(acc);
+          }
+        },
+
+        fallbackCopy(acc) {
+          try {
+            const textArea = document.createElement("textarea");
+            textArea.value = acc;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            if (successful) {
+              this.copied = true;
+              setTimeout(() => this.copied = false, 2000);
+            } else {
+              alert("請手動複製帳號：" + acc);
+            }
+          } catch (err) {
+            alert("請手動複製帳號：" + acc);
+          }
+        },
+
+        closeLiffWindow() {
+          if (typeof liff !== 'undefined' && liff.isInClient()) {
+            liff.closeWindow();
+          } else {
+            alert('已完成訂購！您可以手動關閉此視窗。');
+          }
+        },
+
+        submitOrder() {
+          if (!this.form.name.trim() || !this.form.phone.trim() || !this.form.address.trim()) {
+            alert('請完整填寫收件人姓名、電話與配送地址！');
+            document.getElementById('shipping-form').scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+
+          if (!this.form.bankLast5.trim()) {
+            alert('請填寫轉帳帳號末 5 碼！');
+            document.getElementById('shipping-form').scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+
+          this.isSubmitting = true;
+          const selectedProduct = this.getSelectedProduct();
+
+          const payload = {
+            lineUserId: this.lineUserId,
+            lineUserName: this.lineUserName,
+            name: this.form.name,
+            phone: this.form.phone,
+            address: this.form.address,
+            bankLast5: this.form.bankLast5,
+            payment: '銀行轉帳',
+            note: this.form.note,
+            items: selectedProduct.name,
+            totalPrice: '$' + this.calculateTotal().toLocaleString()
+          };
+
+          fetch(this.GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(data => {
+              this.isSubmitting = false;
+              this.step = 'success';
+            })
+            .catch(() => {
+              this.isSubmitting = false;
+              this.step = 'success';
+            });
+        }
+      }
+    }
+  </script>
+</body>
+</html>
