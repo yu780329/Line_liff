@@ -319,7 +319,6 @@
 
         selectedProductId: 'p2',
 
-        // 🌟 對齊您標準試算表中的四大品名規格
         products: [
           { 
             id: 'p1', 
@@ -473,7 +472,7 @@
             bankLast5: this.form.bankLast5,
             payment: '銀行轉帳',
             note: this.form.note,
-            items: selectedProduct.specName, // 🌟 精準帶入您指定的四大品名格式
+            items: selectedProduct.specName,
             totalPrice: '$' + this.calculateTotal().toLocaleString()
           };
 
