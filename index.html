@@ -254,13 +254,12 @@
         </div>
         <div class="flex justify-between text-stone-600">
           <span>購買內容：</span>
-          <span class="font-bold text-stone-800 text-right" x-text="getSelectedProduct().name"></span>
+          <span class="font-bold text-stone-800 text-right" x-text="getSelectedProduct().specName"></span>
         </div>
         <div class="flex justify-between text-stone-600">
           <span>匯款帳號末五碼：</span>
           <span class="font-bold text-amber-700" x-text="form.bankLast5"></span>
         </div>
-        <!-- 🌟 新增：第二頁顯示宅配備註 -->
         <div class="flex justify-between text-stone-600">
           <span>宅配備註：</span>
           <span class="font-bold text-stone-800 text-right" x-text="form.note.trim() ? form.note : '無'"></span>
@@ -307,8 +306,8 @@
   <script>
     function orderApp() {
       return {
-        GAS_WEB_APP_URL: "https://script.google.com/macros/s/AKfycbzuXdRtS1WAjaDzmUn80yEk_gBLx_ElxB4DyK0KcpyO0epbL5Zfx_QatsbUIy6qZy5NTw/exec",
-        LIFF_ID: "2010938266-FaUnGvo7",
+        GAS_WEB_APP_URL: "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec",
+        LIFF_ID: "YOUR_LIFF_ID",
 
         step: 'order',
         isSubmitting: false,
@@ -320,11 +319,36 @@
 
         selectedProductId: 'p2',
 
+        // 🌟 對齊您標準試算表中的四大品名規格
         products: [
-          { id: 'p1', name: '30顆禮盒 (一箱)', desc: '30顆新鮮雞蛋 ‧ 適合單身/小家庭', price: 420, boxes: 1, badge: '', img: 'egg.jpg' },
-          { id: 'p2', name: '60顆禮盒 (兩箱)', desc: '60顆新鮮雞蛋 ‧ 一般家庭首選', price: 840, boxes: 2, badge: '熱銷推薦', img: 'egg.jpg' },
-          { id: 'p3', name: '90顆禮盒 (三箱)', desc: '90顆新鮮雞蛋 ‧ 團購合購分享', price: 1260, boxes: 3, badge: '', img: 'egg.jpg' },
-          { id: 'p4', name: '120顆禮盒 (四箱)', desc: '120顆新鮮雞蛋 ‧ 滿四箱享免運優惠！', price: 1680, boxes: 4, badge: '🚀 滿4箱免運', img: 'egg.jpg' }
+          { 
+            id: 'p1', 
+            name: '30顆禮盒 (一箱)', 
+            specName: '• 30顆禮盒(一箱) ＄420+運費100', 
+            desc: '30顆新鮮雞蛋 ‧ 適合單身/小家庭', 
+            price: 420, boxes: 1, badge: '', img: 'egg.jpg' 
+          },
+          { 
+            id: 'p2', 
+            name: '60顆禮盒 (兩箱)', 
+            specName: '• 60顆禮盒(兩箱)＄840+運費100', 
+            desc: '60顆新鮮雞蛋 ‧ 一般家庭首選', 
+            price: 840, boxes: 2, badge: '熱銷推薦', img: 'egg.jpg' 
+          },
+          { 
+            id: 'p3', 
+            name: '90顆禮盒 (三箱)', 
+            specName: '• 90顆禮盒(三箱)＄1260+運費100', 
+            desc: '90顆新鮮雞蛋 ‧ 團購合購分享', 
+            price: 1260, boxes: 3, badge: '', img: 'egg.jpg' 
+          },
+          { 
+            id: 'p4', 
+            name: '120顆禮盒 (四箱)', 
+            specName: '• 120顆禮盒(四箱)＄1680免運費', 
+            desc: '120顆新鮮雞蛋 ‧ 滿四箱享免運優惠！', 
+            price: 1680, boxes: 4, badge: '🚀 滿4箱免運', img: 'egg.jpg' 
+          }
         ],
 
         form: { name: '', phone: '', address: '', bankLast5: '', note: '' },
@@ -449,7 +473,7 @@
             bankLast5: this.form.bankLast5,
             payment: '銀行轉帳',
             note: this.form.note,
-            items: selectedProduct.name,
+            items: selectedProduct.specName, // 🌟 精準帶入您指定的四大品名格式
             totalPrice: '$' + this.calculateTotal().toLocaleString()
           };
 
