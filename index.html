@@ -480,7 +480,29 @@
             .then(res => res.json())
             .then(data => {
               this.isSubmitting = false;
-              this.step = 'success';
+
+              // 🌟 核心免費技巧：讓顧客的手機在 LINE 對話框自動替顧客傳出一則訂單紀錄 (觸發 0 元 Webhook/Reply)
+              if (typeof liff !== 'undefined' && liff.isInClient()) {
+                liff.sendMessages([{
+                  type: 'text',
+                  text: '📝 我已完成線上訂購！
+' +
+                        '姓名：' + this.form.name + '
+' +
+                        '品項：' + selectedProduct.specName + '
+' +
+                        '金額：$' + this.calculateTotal().toLocaleString() + '
+' +
+                        '末五碼：' + this.form.bankLast5
+                }]).then(() => {
+                  this.step = 'success';
+                }).catch(err => {
+                  console.log('發送聊天室訊息失敗或權限未勾選，直接進入成功頁面');
+                  this.step = 'success';
+                });
+              } else {
+                this.step = 'success';
+              }
             })
             .catch(() => {
               this.isSubmitting = false;
