@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>欣容友善雞蛋 - 線上訂購</title>
   
+  <!-- LINE LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   
+  <!-- Alpine.js 邏輯 (放在 Head 確保全域函式順利載入) -->
   <script>
     function orderApp() {
       return {
@@ -81,7 +84,7 @@
                     .catch(err => console.log('歷史資料抓取跳過'));
                 });
               }
-            }).catch(err => console.log('LIFF 初始化完成或跳過'));
+            }).catch(err => console.log('LIFF 初始化完成或非 LINE 環境'));
           }
         },
 
@@ -187,13 +190,11 @@
               this.isSubmitting = false;
 
               if (typeof liff !== 'undefined' && liff.isInClient()) {
+                const msgText = `📝 我已完成線上訂購！\n姓名：${this.form.name}\n品項：${selectedProduct.specName}\n金額：$${this.calculateTotal().toLocaleString()}\n末五碼：${this.form.bankLast5}`;
+                
                 liff.sendMessages([{
                   type: 'text',
-                  text: '📝 我已完成線上訂購！\n' +
-                        '姓名：' + this.form.name + '\n' +
-                        '品項：' + selectedProduct.specName + '\n' +
-                        '金額：$' + this.calculateTotal().toLocaleString() + '\n' +
-                        '末五碼：' + this.form.bankLast5
+                  text: msgText
                 }]).then(() => {
                   this.step = 'success';
                 }).catch(err => {
@@ -212,8 +213,10 @@
     }
   </script>
 
+  <!-- Alpine.js 框架 -->
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  
+
+  <!-- Google 字體 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -239,8 +242,10 @@
 </head>
 <body class="bg-stone-100 font-sans text-stone-800 antialiased pb-28 selection:bg-brand-100 selection:text-brand-800" x-data="orderApp()">
 
+  <!-- 1. 訂購填單介面 -->
   <div x-show="step === 'order'">
     
+    <!-- 頂部品牌標頭 -->
     <header class="bg-gradient-to-r from-brand-800 to-brand-700 text-white px-5 pt-6 pb-5 shadow-md rounded-b-3xl">
       <div class="max-w-md mx-auto">
         <div class="flex items-center justify-between">
@@ -258,6 +263,7 @@
           </span>
         </div>
 
+        <!-- 品質保證標籤 -->
         <div class="mt-3.5 pt-2.5 border-t border-brand-600/60 grid grid-cols-3 gap-1 text-center text-[11px] text-brand-100 font-medium">
           <div>✓ 100% 友善平飼</div>
           <div>✓ 無抗生素殘留</div>
@@ -266,8 +272,10 @@
       </div>
     </header>
 
+    <!-- 主要內容區 -->
     <main class="max-w-md mx-auto px-4 mt-3.5 space-y-3.5">
 
+      <!-- 滿額免運提示 Banner -->
       <div class="bg-amber-50 border border-amber-200/90 rounded-2xl p-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center space-x-2.5">
           <span class="text-2xl">🚚</span>
@@ -279,6 +287,7 @@
         <span class="text-xs font-bold text-amber-900 bg-amber-200/80 px-2.5 py-1 rounded-xl">4箱免運</span>
       </div>
 
+      <!-- 老客戶歡迎 Banner -->
       <div x-show="isReturningCustomer" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 flex items-center justify-between shadow-sm">
         <div class="flex items-center space-x-2.5">
           <span class="text-xl">🌟</span>
@@ -289,6 +298,7 @@
         </div>
       </div>
 
+      <!-- 單選規格列表 -->
       <section class="space-y-2.5">
         <div class="flex items-center justify-between px-1">
           <h2 class="text-sm font-extrabold text-stone-800 flex items-center gap-1.5">
@@ -303,6 +313,7 @@
                :class="selectedProductId === product.id ? 'border-2 border-brand-600 bg-white shadow-md ring-1 ring-brand-600/30' : 'border border-stone-200 bg-white shadow-sm hover:border-stone-300'"
                class="rounded-2xl p-3.5 transition cursor-pointer relative overflow-hidden">
             
+            <!-- 熱銷 / 免運 懸浮標籤 -->
             <span x-show="product.badge" x-text="product.badge" 
                   :class="product.id === 'p4' ? 'bg-gradient-to-r from-red-500 to-amber-500 text-white' : 'bg-amber-500 text-white'"
                   class="absolute top-0 right-0 text-[10px] font-bold px-2.5 py-0.5 rounded-bl-xl shadow-sm">
@@ -310,6 +321,7 @@
 
             <div class="flex items-center space-x-3">
               
+              <!-- 左側 Radio 按鈕 -->
               <div class="flex-shrink-0">
                 <div :class="selectedProductId === product.id ? 'border-2 border-brand-600 bg-white' : 'border-2 border-stone-300 bg-white'"
                      class="w-6 h-6 rounded-full flex items-center justify-center transition">
@@ -317,6 +329,7 @@
                 </div>
               </div>
 
+              <!-- 中間商品圖片 -->
               <div class="w-16 h-16 rounded-xl bg-amber-100 flex-shrink-0 overflow-hidden border border-amber-200/60 flex items-center justify-center">
                 <img :src="product.img || 'egg.jpg'" 
                      :alt="product.name" 
@@ -325,6 +338,7 @@
                 <span class="text-2xl hidden">🥚</span>
               </div>
 
+              <!-- 右側文字與價格 -->
               <div class="flex-1 min-w-0">
                 <h3 class="font-bold text-stone-900 text-sm leading-tight" x-text="product.name"></h3>
                 <p class="text-[11px] text-stone-500 mt-0.5 truncate" x-text="product.desc"></p>
@@ -342,6 +356,7 @@
         </template>
       </section>
 
+      <!-- 寄送資訊與匯款填寫表單 -->
       <section class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200/70 space-y-3.5" id="shipping-form">
         <h2 class="text-sm font-extrabold text-stone-800 flex items-center gap-1.5 border-b border-stone-100 pb-2">
           <span class="w-2 h-4 bg-amber-500 rounded-full inline-block"></span>
@@ -363,6 +378,7 @@
           <input type="text" x-model="form.address" placeholder="請輸入完整收件地址" class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
         </div>
 
+        <!-- 🏦 匯款帳號展示區 -->
         <div class="bg-amber-50 rounded-2xl p-3.5 border border-amber-200/90 space-y-2">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-amber-900 flex items-center gap-1">
@@ -384,6 +400,7 @@
           </div>
         </div>
 
+        <!-- ✍️ 匯款帳號末五碼 -->
         <div class="space-y-1">
           <label class="block text-xs font-bold text-stone-700">匯款帳號末 5 碼 <span class="text-red-500">*</span></label>
           <input type="text" x-model="form.bankLast5" maxlength="5" placeholder="例如：85591 (請填寫轉帳帳號末五碼)" 
@@ -399,6 +416,7 @@
 
     </main>
 
+    <!-- 吸底購物車列 -->
     <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-200/80 shadow-2xl p-3.5 z-50">
       <div class="max-w-md mx-auto flex items-center justify-between gap-3">
         <div class="flex-1">
@@ -420,6 +438,7 @@
 
   </div>
 
+  <!-- 2. 下單成功與匯款帳號卡片介面 -->
   <div x-show="step === 'success'" class="max-w-md mx-auto px-4 pt-8 pb-10 space-y-5">
     <div class="bg-white rounded-3xl p-6 shadow-xl border border-stone-200/80 text-center space-y-4">
       
@@ -455,6 +474,7 @@
         </div>
       </div>
 
+      <!-- 🏦 匯款帳號展示區 (第二頁) -->
       <div class="bg-amber-50 rounded-2xl p-4 text-left border border-amber-200 space-y-2.5">
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold text-amber-900 flex items-center gap-1">
