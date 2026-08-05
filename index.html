@@ -81,7 +81,7 @@
                     .catch(err => console.log('歷史資料抓取跳過'));
                 });
               }
-            }).catch(err => console.log('LIFF 初始化完成或跳過'));
+            }).catch(err => console.log('LIFF 初始化完成或非 LINE 環境'));
           }
         },
 
@@ -187,13 +187,13 @@
               this.isSubmitting = false;
 
               if (typeof liff !== 'undefined' && liff.isInClient()) {
+                // 🌟 動態生成毫秒級專屬驗證碼，防止對話框手動亂打
+                const secretCode = "[驗證碼:SR-" + Date.now().toString().slice(-6) + "]";
+                const msgText = `📝 我已完成線上訂購！\n姓名：${this.form.name}\n品項：${selectedProduct.specName}\n金額：$${this.calculateTotal().toLocaleString()}\n末五碼：${this.form.bankLast5}\n${secretCode}`;
+                
                 liff.sendMessages([{
                   type: 'text',
-                  text: '📝 我已完成線上訂購！\n' +
-                        '姓名：' + this.form.name + '\n' +
-                        '品項：' + selectedProduct.specName + '\n' +
-                        '金額：$' + this.calculateTotal().toLocaleString() + '\n' +
-                        '末五碼：' + this.form.bankLast5
+                  text: msgText
                 }]).then(() => {
                   this.step = 'success';
                 }).catch(err => {
@@ -213,7 +213,7 @@
   </script>
 
   <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -318,7 +318,7 @@
               </div>
 
               <div class="w-16 h-16 rounded-xl bg-amber-100 flex-shrink-0 overflow-hidden border border-amber-200/60 flex items-center justify-center">
-                <img :src="product.img || 'egg.jpg'" 
+                <img :src="product.img || 'logo.jpg'" 
                      :alt="product.name" 
                      class="w-full h-full object-cover"
                      @error="$el.style.display='none'; $el.nextElementSibling.style.display='block'">
