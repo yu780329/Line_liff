@@ -187,7 +187,6 @@
               this.isSubmitting = false;
 
               if (typeof liff !== 'undefined' && liff.isInClient()) {
-                // 🌟 動態生成毫秒級專屬驗證碼，防止對話框手動亂打
                 const secretCode = "[驗證碼:SR-" + Date.now().toString().slice(-6) + "]";
                 const msgText = `📝 我已完成線上訂購！\n姓名：${this.form.name}\n品項：${selectedProduct.specName}\n金額：$${this.calculateTotal().toLocaleString()}\n末五碼：${this.form.bankLast5}\n${secretCode}`;
                 
@@ -384,6 +383,14 @@
           </div>
         </div>
 
+        <div class="bg-red-50 border border-red-200/80 rounded-2xl p-3 flex items-start space-x-2.5 shadow-sm">
+          <span class="text-red-500 text-lg leading-none mt-0.5">🛡️</span>
+          <div class="text-[11px] text-red-800 font-medium leading-relaxed">
+            <span class="font-bold text-red-900 border-b border-red-300 pb-0.5 inline-block mb-0.5">【官方防詐騙聲明】</span><br>
+            農場<span class="font-extrabold text-red-700">絕不會</span>主動以電話要求變更匯款帳號、操作 ATM 或設定分期扣款。轉帳前請認明戶名為 <span class="font-extrabold text-stone-900">「邱茂榮」</span>，切勿聽信不明來電！
+          </div>
+        </div>
+
         <div class="space-y-1">
           <label class="block text-xs font-bold text-stone-700">匯款帳號末 5 碼 <span class="text-red-500">*</span></label>
           <input type="text" x-model="form.bankLast5" maxlength="5" placeholder="例如：85591 (請填寫轉帳帳號末五碼)" 
@@ -475,6 +482,10 @@
           </div>
         </div>
         <p class="text-[11px] text-amber-700 pt-1">💡 您可隨時在 LINE 對話框點選「查進度」進行訂單狀態追蹤喔！</p>
+      </div>
+
+      <div class="bg-red-50 border border-red-200 text-left rounded-2xl p-3 text-[11px] text-red-800 font-medium">
+        🛡️ <span class="font-bold text-red-900">防詐小叮嚀：</span>匯款完成後請透過 LINE 官方帳號進行對帳，若接獲可疑要求操作 ATM 提款機電話，請立即撥打 165 防詐騙專線！
       </div>
 
       <button type="button" @click="closeLiffWindow()" 
